@@ -1,170 +1,269 @@
-﻿#include <iostream>
-#include <fstream>
-#include <vector>
-#include <string>
+﻿#include "PressureMeasurement.h"
+
 #include <algorithm>
-#include <sstream>
 #include <cctype>
+#include <fstream>
+#include <iostream>
 #include <regex>
+#include <sstream>
+#include <string>
+#include <vector>
 
 using namespace std;
-// Дата высота(Дробное) значение(целое). В рандомном порядке, вывести топ 3 по высоте.
-//struct PressureMeasurement {
-//    string date;
-//    double height = 0.0;
-//    int value = 0;
-//
-//    PressureMeasurement(const string& input) {
-//        stringstream ss(input);
-//        string token;
-//
-//        /*date = extractDataFromString(input, "asd");
-//        height = stod(extractDataFromString(input, "asd"));
-//        value = stoi(extractDataFromString(input, "asd"));*/
-//
-//        // Обрабатываю каждый токен в строке
-//        while (ss >> token) {
-//            if (isDate(token)) {
-//                date = token;
-//            }
-//            else if (isDouble(token)) {
-//                height = stod(token);
-//            }
-//            else if (isInteger(token)) {
-//                value = stoi(token);
-//            }
-//        }
-//    }
-//
-//private:
-//    //string extractDataFromString(const string& str, const regex& ep) {
-//    //}
-//
-//    bool isDate(const string& token) {
-//        if (token.length() != 10) return false;
-//        if (token[4] != '.' || token[7] != '.') return false;
-//
-//        for (int i = 0; i < 10; i++) {
-//            if (i == 4 || i == 7) continue;
-//            if (!isdigit(token[i])) return false;
-//        }
-//        return true;
-//    }
-//
-//    bool isDouble(const string& token) {
-//        if (token.empty()) return false;
-//        bool hasDecimalPoint = false;
-//        bool hasDigit = false;
-//
-//        for (size_t i = 0; i < token.length(); i++) {
-//            char c = token[i];
-//            if (c == '.') {
-//                if (hasDecimalPoint) return false;
-//                hasDecimalPoint = true;
-//            }
-//            else if (isdigit(c)) {
-//                hasDigit = true;
-//            }
-//            else {
-//                return false;
-//            }
-//        }
-//        return hasDigit && hasDecimalPoint; // Должна содержать точку для высоты
-//    }
-//
-//    bool isInteger(const string& token) {
-//        if (token.empty()) return false;
-//        for (char c : token) {
-//            if (!isdigit(c)) {
-//                return false;
-//            }
-//        }
-//        return true;
-//    }
-//};
 
-struct PressureMeasurement {
-    string date;
-    double height = 0.0;
-    int value = 0;
+/**
+ * @brief Парсит строку в объект PressureMeasurement
+ *
+ * @param input Входная строка для парсинга
+ * @return PressureMeasurement Объект с данными измерения
+ * @throws runtime_error Если не удалось распарсить данные
+ */
+PressureMeasurement parserPressureMeasurement(const string& input) {
+    regex datePattern(R"(\b\d{4}\.\d{2}\.\d{2}\b)");
+    regex doublePattern(R"((?:^|\s)(?!(?:\d{4}\.\d{2}\.\d{2}|\d{2}\.\d{2}))(\d+\.\d+)(?=\s|$))");
+    regex intPattern(R"(\b\d+\b)");
 
-    PressureMeasurement(const string& input) {
-        // Регулярные выражения для разных типов данных
-        regex date_pattern(R"(\d{4}\.\d{2}\.\d{2})");
-        regex double_pattern(R"(\b\d+\.\d+\b)");
-        regex int_pattern(R"(\b\d+\b)");
+    smatch matches;
+    string date_;
+    double height_ = 0.0;
+    int value_ = 0;
 
-        smatch matches;
-
-        // Ищем дату
-        if (regex_search(input, matches, date_pattern)) {
-            date = matches[0];
-        }
-
-        // Ищем дробное число (высоту)
-        if (regex_search(input, matches, double_pattern)) {
-            height = stod(matches[0]);
-        }
-
-        // Ищем целое число (значение) - ищем все, берем последнее
-        string::const_iterator search_start = input.cbegin();
-        string last_int;
-        while (regex_search(search_start, input.cend(), matches, int_pattern)) {
-            last_int = matches[0];
-            search_start = matches.suffix().first;
-        }
-        if (!last_int.empty()) {
-            value = stoi(last_int);
-        }
+    if (!regex_search(input, matches, datePattern)) {
+        throw runtime_error("No date found");
     }
-};
+    date_ = matches[0];
 
+    vector<string> allDoubles;
+    auto search = input.cbegin();
 
-int main() {
-    ifstream file("in.txt");
-    string line;
+    while (regex_search(search, input.cend(), matches, doublePattern)) {
+        string found = matches[0];
+
+        if (found != date_) {
+            allDoubles.push_back(found);
+        }
+        search = matches.suffix().first;
+    }
+
+    if (allDoubles.empty()) {
+        throw runtime_error("No height found");
+    }
+
+    height_ = stod(allDoubles[0]);
+
+    vector<string> allInts;
+    search = input.cbegin();
+
+    while (regex_search(search, input.cend(), matches, intPattern)) {
+        string found = matches[0];
+        bool isPartOfDate = false;
+
+        if (date_.find(found) != string::npos) {
+            size_t pos = date_.find(found);
+            if ((pos == 0 && found.length() == 4) ||
+                (pos == 5 && found.length() == 2) ||
+                (pos == 8 && found.length() == 2)) {
+                isPartOfDate = true;
+            }
+        }
+
+        bool isPartOfDouble = false;
+        for (const auto& dbl : allDoubles) {
+            if (dbl.find(found) != string::npos) {
+                if (dbl != found) {
+                    isPartOfDouble = true;
+                    break;
+                }
+            }
+        }
+
+        if (!isPartOfDate && !isPartOfDouble) {
+            allInts.push_back(found);
+        }
+
+        search = matches.suffix().first;
+    }
+
+    if (allInts.empty()) {
+        throw runtime_error("No value found");
+    }
+
+    value_ = stoi(allInts[0]);
+
+    return PressureMeasurement(date_, height_, value_);
+}
+
+/**
+ * @brief Читает измерения из файла
+ *
+ * @param filename Имя файла для чтения
+ * @return vector<PressureMeasurement> Вектор измерений
+ * @throws runtime_error Если не удалось открыть файл
+ */
+vector<PressureMeasurement> readMeasurementsFromFile(const string& filename) {
+    ifstream file(filename);
     vector<PressureMeasurement> measurements;
-    char choise;
 
     if (!file.is_open()) {
-        cout << "Error opening file!" << endl;
-        return 1;
+        throw runtime_error("Error opening file: " + filename);
     }
 
-    cout << "Original data(sort):" << endl;
+    string line;
     while (getline(file, line)) {
-        try {
-            PressureMeasurement m(line);
-            measurements.push_back(m);
-            cout << "Date: " << m.date << " Height: " << m.height << " Value: " << m.value << endl;
-        }
-        catch (const exception& e) {
-            cout << "Error processing: " << line << " - " << e.what() << endl;
+        if (!line.empty()) {
+            try {
+                measurements.push_back(parserPressureMeasurement(line));
+            }
+            catch (const exception& e) {
+                cerr << "Warning: Skipping invalid line: " << line
+                    << " - " << e.what() << endl;
+            }
         }
     }
-    file.close();
 
+    file.close();
+    return measurements;
+}
+
+/**
+ * @brief Сортирует измерения по высоте (по убыванию)
+ *
+ * @param measurements Вектор измерений для сортировки
+ * @return vector<PressureMeasurement> Отсортированный вектор
+ */
+vector<PressureMeasurement> sortByHeight(const vector<PressureMeasurement>& measurements) {
+    vector<PressureMeasurement> sorted = measurements;
+    sort(sorted.begin(), sorted.end(),
+        [](const PressureMeasurement& a, const PressureMeasurement& b) {
+            return a.getHeight() > b.getHeight();
+        });
+    return sorted;
+}
+
+/**
+ * @brief Выводит топ N измерений по высоте
+ *
+ * @param measurements Вектор измерений
+ * @param n Количество измерений для вывода (по умолчанию 3)
+ */
+void printTopN(const vector<PressureMeasurement>& measurements, int n = 3) {
     if (measurements.empty()) {
-        cout << "No valid data!" << endl;
+        cout << "No data to display!" << endl;
+        return;
+    }
+
+    cout << "\nTop-" << n << " by height:" << endl;
+    int displayCount = min(n, (int)measurements.size());
+
+    for (int i = 0; i < displayCount; ++i) {
+        cout << measurements[i].getDate() << " " << measurements[i].getHeight()
+            << " " << measurements[i].getValue() << endl;
+    }
+}
+
+/**
+ * @brief Выводит все измерения
+ *
+ * @param measurements Вектор измерений
+ */
+void printAllMeasurements(const vector<PressureMeasurement>& measurements) {
+    if (measurements.empty()) {
+        cout << "No data to display!" << endl;
+        return;
+    }
+
+    cout << "\nAll measurements:" << endl;
+    for (const auto& item : measurements) {
+        cout << item.getDate() << " " << item.getHeight()
+            << " " << item.getValue() << endl;
+    }
+}
+
+/**
+ * @brief Обрабатывает выбор пользователя в меню
+ *
+ * @param measurements Исходные измерения
+ * @param sortedMeasurements Отсортированные измерения
+ * @return true Если нужно продолжить цикл
+ * @return false Если нужно завершить программу
+ */
+bool processUserChoice(const vector<PressureMeasurement>& measurements,
+    const vector<PressureMeasurement>& sortedMeasurements) {
+    char choice;
+    cout << "\nMenu options:" << endl;
+    cout << "1. Show all measurements" << endl;
+    cout << "2. Show Top-3 by height" << endl;
+    cout << "3. Show Top-N by height" << endl;
+    cout << "4. Quit" << endl;
+    cout << "\nEnter your choice: ";
+    cin >> choice;
+
+    switch (choice) {
+    case '1':
+        printAllMeasurements(measurements);
+        break;
+
+    case '2':
+        printTopN(sortedMeasurements);
+        break;
+
+    case '3': {
+        int n;
+        cout << "Enter N: ";
+        cin >> n;
+        if (n > 0) {
+            printTopN(sortedMeasurements, n);
+        }
+        else {
+            cout << "Invalid number!" << endl;
+        }
+        break;
+    }
+
+    case '4':
+    case 'q':
+    case 'Q':
+        return false;
+
+    default:
+        cout << "Invalid choice! Please try again." << endl;
+        break;
+    }
+
+    return true;
+}
+
+/**
+ * @brief Основной цикл работы программы
+ *
+ * @param measurements Вектор измерений
+ */
+void runMainLoop(const vector<PressureMeasurement>& measurements) {
+    vector<PressureMeasurement> sortedMeasurements = sortByHeight(measurements);
+    bool continueLoop = true;
+
+    while (continueLoop) {
+        continueLoop = processUserChoice(measurements, sortedMeasurements);
+    }
+}
+
+int main() {
+    try {
+        vector<PressureMeasurement> measurements = readMeasurementsFromFile("in.txt");
+
+        if (measurements.empty()) {
+            cout << "No valid data!" << endl;
+            return 1;
+        }
+
+        cout << "Successfully loaded " << measurements.size() << " measurements" << endl;
+        runMainLoop(measurements);
+        cout << "\nGoodbye!" << endl;
+
+        return 0;
+    }
+    catch (const exception& e) {
+        cerr << "Error: " << e.what() << endl;
         return 1;
     }
-    cout << "sort for Top-3 by height?(y,n)" << endl;
-    cin >> choise;
-    if (choise == 'y' || choise == 'Y') {
-        // Сортировка по высоте в порядке убывания
-        sort(measurements.begin(), measurements.end(),
-            [](const PressureMeasurement& a, const PressureMeasurement& b) {
-                return a.height > b.height;
-            });
-        cout << "\nTop-3 by height:" << endl;
-        for (int i = 0; i < min(3, (int)measurements.size()); i++) {
-            cout << measurements[i].date << " " << measurements[i].height << " " << measurements[i].value << endl;
-        }
-    }
-    else {
-        for (int i = 0; i < measurements.size(); i++) {
-            cout << measurements[i].date << " " << measurements[i].height << " " << measurements[i].value << endl;
-        }
-    }
-    return 0;
 }

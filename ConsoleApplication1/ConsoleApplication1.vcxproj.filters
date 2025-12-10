@@ -13,10 +13,57 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Исходные файлы\scr">
+      <UniqueIdentifier>{5f472af9-5e03-4df1-9afc-2a37eb3eeef9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Исходные файлы\tests">
+      <UniqueIdentifier>{3b4b392c-772d-47fe-994f-9351653345ac}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ConsoleApplication1.cpp">
-      <Filter>Исходные файлы</Filter>
+    <ClCompile Include="PressureMeasurement.cpp">
+      <Filter>Исходные файлы\scr</Filter>
     </ClCompile>
+    <ClCompile Include="DataParser.cpp">
+      <Filter>Исходные файлы\scr</Filter>
+    </ClCompile>
+    <ClCompile Include="FileReader.cpp">
+      <Filter>Исходные файлы\scr</Filter>
+    </ClCompile>
+    <ClCompile Include="MeasurementManager.cpp">
+      <Filter>Исходные файлы\scr</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>Исходные файлы\scr</Filter>
+    </ClCompile>
+    <ClCompile Include="TestPressureMeasurement.cpp">
+      <Filter>Исходные файлы\tests</Filter>
+    </ClCompile>
+    <ClCompile Include="TestDataParser.cpp">
+      <Filter>Исходные файлы\tests</Filter>
+    </ClCompile>
+    <ClCompile Include="TestFileReader.cpp">
+      <Filter>Исходные файлы\tests</Filter>
+    </ClCompile>
+    <ClCompile Include="TestMeasurementManager.cpp">
+      <Filter>Исходные файлы\tests</Filter>
+    </ClCompile>
+    <ClCompile Include="RunAllTests.cpp">
+      <Filter>Исходные файлы\tests</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="DataParser.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="FileReader.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="MeasurementManager.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="PressureMeasurement.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
